@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "任务看板",
+    "description": "在左侧导航打开 Todo / Doing / Done 三列看板，按项目记录进度；数据保存在本地 Obsidian 仓库的 Markdown 文件里，可直接阅读和手改。"
+  }
+}

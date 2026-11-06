@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Task Kanban">
+  <rect x="2" y="2" width="60" height="60" rx="14" fill="#1f6feb"/>
+  <rect x="12" y="14" width="11" height="36" rx="3.5" fill="#ffffff"/>
+  <rect x="26.5" y="14" width="11" height="24" rx="3.5" fill="#ffffff" opacity="0.82"/>
+  <rect x="41" y="14" width="11" height="16" rx="3.5" fill="#ffffff" opacity="0.62"/>
+</svg>

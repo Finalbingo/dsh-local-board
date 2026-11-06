@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Task Kanban",
+    "description": "A Todo / Doing / Done board in the left sidebar, grouped by project. Cards live in Markdown files inside your local Obsidian vault, so you can read and edit them directly."
+  }
+}

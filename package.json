@@ -1,0 +1,62 @@
+{
+  "name": "dsh-local-board",
+  "version": "1.4.6",
+  "description": "本地待办看板：Todo/Doing/Done 三列，按项目组织。首次使用自己选一个文件夹，数据就是一个 Markdown 文件，随你放哪、随你备份。macOS 支持到期提醒。",
+  "type": "module",
+  "main": "index.js",
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js",
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./package.json": "./package.json",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg"
+  },
+  "files": [
+    "index.js",
+    "automations.js",
+    "store.js",
+    "client.js",
+    "cordis.patch.yml",
+    "locale/*.json",
+    "icon.svg",
+    "scripts/*.py",
+    "README.md",
+    "LICENSE"
+  ],
+  "license": "MIT",
+  "keywords": [
+    "deepseek",
+    "harness",
+    "dsh",
+    "dsh-plugin",
+    "kanban",
+    "obsidian",
+    "markdown",
+    "task-board"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Finalbingo/dsh-local-board.git"
+  },
+  "homepage": "https://github.com/Finalbingo/dsh-local-board",
+  "bugs": {
+    "url": "https://github.com/Finalbingo/dsh-local-board/issues"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true,
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-sidebar"
+      ]
+    }
+  }
+}

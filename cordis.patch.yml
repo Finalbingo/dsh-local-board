@@ -1,0 +1,6 @@
+- insert:
+    - id: kanban
+      name: 'dsh-local-board'
+      # 数据目录默认是 ~/Documents/DSH看板；在你的 profile 的 cordis.patch.yml 里
+      # 用 `- id: kanban` + config.vaultDir 覆盖，不要改这个包里的文件。
+      config: {}
