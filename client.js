@@ -59,9 +59,11 @@ window.__ModuleLoader__.load({
 .kb-proj-del { flex: 0 0 auto; margin-right: 4px; width: 20px; height: 20px; line-height: 1; padding: 0; border: 0; border-radius: 5px; background: transparent; color: var(--dsw-alias-label-secondary); cursor: pointer; opacity: 0; font-size: 14px; }
 .kb-proj:hover .kb-proj-del { opacity: 1; }
 .kb-proj-del:hover { color: var(--dsw-alias-state-error-primary); background: var(--dsw-alias-bg-base); }
-.kb-rail-action { margin-top: auto; text-align: left; font: inherit; font-size: 11.5px; padding: 6px 9px; border: 0; background: transparent; color: var(--dsw-alias-label-secondary); cursor: pointer; border-radius: 6px; }
-.kb-rail-action:hover { color: var(--dsw-alias-label-primary); background: var(--dsw-alias-bg-layer-2); }
-.kb-version { font-size: 11px; color: var(--dsw-alias-label-secondary); opacity: .6; padding: 4px 9px 2px; }
+.kb-split { position: relative; display: inline-flex; }
+.kb-split-main { border-top-right-radius: 0; border-bottom-right-radius: 0; border-right-width: 0; }
+.kb-split-caret { border-top-left-radius: 0; border-bottom-left-radius: 0; padding: 5px 6px; font-size: 10px; line-height: 1; }
+.kb-folder-menu { position: absolute; right: 0; top: calc(100% + 4px); z-index: 30; min-width: 150px; padding: 5px; border-radius: 9px; border: 1px solid var(--dsw-alias-border-l2); background: var(--dsw-alias-bg-overlay); box-shadow: 0 8px 22px rgba(0, 0, 0, .18); display: flex; flex-direction: column; }
+.kb-version { font-size: 11px; color: var(--dsw-alias-label-secondary); opacity: .6; padding: 10px 9px 4px; margin-top: auto; }
 .kb-proj-head { display: flex; align-items: center; gap: 6px; min-width: 0; }
 .kb-status-dot { width: 6px; height: 6px; border-radius: 50%; flex: 0 0 auto; }
 .kb-status-dot.active { background: var(--dsw-alias-state-success-primary); }
@@ -584,6 +586,16 @@ window.__ModuleLoader__.load({
 				}
 			};
 			const [dropTarget, setDropTarget] = React.useState('');
+			const [folderMenu, setFolderMenu] = React.useState(false);
+			const folderRef = React.useRef(null);
+			React.useEffect(() => {
+				if (!folderMenu) return undefined;
+				const close = (event) => {
+					if (folderRef.current && !folderRef.current.contains(event.target)) setFolderMenu(false);
+				};
+				document.addEventListener('mousedown', close);
+				return () => document.removeEventListener('mousedown', close);
+			}, [folderMenu]);
 			// Reveal is per-view and in memory only: reopening or refreshing the board re-masks everything.
 			const [revealed, setRevealed] = React.useState({});
 			const isMasked = (item) => Boolean(item.hidden) && revealed[item.id] !== true;
@@ -703,11 +715,35 @@ window.__ModuleLoader__.load({
 						title: sortMode === 'due' ? '当前：按截止日排序，点击改回手动顺序' : '当前：手动顺序，点击改为按截止日排序',
 						onClick: () => setSort(sortMode === 'due' ? 'manual' : 'due')
 					}, sortMode === 'due' ? '排序 · 截止日' : '排序 · 手动') : null,
-					tab === 'board' ? h('button', {
-						className: 'kb-btn',
-						title: data.vaultDir ? `在访达中打开：${data.vaultDir}` : '打开数据文件夹',
-						onClick: () => run('openFolder')
-					}, '打开文件夹') : null,
+					tab === 'board' ? h('span', { className: 'kb-split', ref: folderRef },
+						h('button', {
+							className: 'kb-btn kb-split-main',
+							title: data.vaultDir ? `在访达中打开：${data.vaultDir}` : '打开数据文件夹',
+							onClick: () => run('openFolder')
+						}, '打开文件夹'),
+						h('button', {
+							className: 'kb-btn kb-split-caret',
+							title: '更多目录操作',
+							'aria-label': '更多目录操作',
+							onClick: () => setFolderMenu(!folderMenu)
+						}, '▾'),
+						folderMenu ? h('div', { className: 'kb-folder-menu' },
+							h('button', {
+								className: 'kb-menu-item',
+								onClick: async () => {
+									setFolderMenu(false);
+									if (typeof pickDirectory !== 'function') return;
+									try {
+										const chosen = await pickDirectory();
+										if (!chosen) return;
+										await call('configureVault', { path: chosen });
+									} catch (failure) {
+										window.alert(failure instanceof Error ? failure.message : String(failure));
+									}
+								}
+							}, '更换数据目录')
+						) : null
+					) : null,
 					h('button', { className: 'kb-btn', onClick: () => run('state') }, '刷新'),
 					tab === 'board' ? h('button', { className: 'kb-btn primary', onClick: () => setCreating(true) }, '＋ 新建项目') : null
 				),
@@ -773,20 +809,6 @@ window.__ModuleLoader__.load({
 								}, '×')
 							);
 						}),
-						h('button', {
-							className: 'kb-rail-action',
-							title: data.vaultDir ? `当前：${data.vaultDir}` : '选择数据目录',
-							onClick: async () => {
-								if (typeof pickDirectory !== 'function') return;
-								try {
-									const chosen = await pickDirectory();
-									if (!chosen) return;
-									await call('configureVault', { path: chosen });
-								} catch (failure) {
-									window.alert(failure instanceof Error ? failure.message : String(failure));
-								}
-							}
-						}, '更换数据目录'),
 						h('span', { className: 'kb-version' }, data.version ? `看板 v${data.version}` : '')
 					),
 					h('div', { className: 'kb-main' },
