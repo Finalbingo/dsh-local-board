@@ -24,6 +24,13 @@ window.__ModuleLoader__.load({
 			configureVault: '选择文件夹'
 		};
 		const PROJECT_STATUS = ['进行中', '暂停', '已结束'];
+		/**
+		 * True while an IME is composing (Chinese/Japanese/Korean input). Enter and Escape
+		 * then belong to the IME — confirming a candidate must never submit the form.
+		 */
+		const composing = (event) => (event.nativeEvent && event.nativeEvent.isComposing === true)
+			|| event.isComposing === true
+			|| event.keyCode === 229;
 		/** Card color stripe; keys match what the markdown stores. */
 		const CARD_COLORS = [
 			{ key: 'red', hex: '#e5484d', label: '红' },
@@ -211,6 +218,7 @@ window.__ModuleLoader__.load({
 				placeholder,
 				onChange: (event) => setDraft({ ...draft, [key]: event.target.value }),
 				onKeyDown: (event) => {
+					if (composing(event)) return;
 					if (event.key === 'Escape') onCancel();
 					if (event.key === 'Enter') onSubmit(draft);
 				}
@@ -515,6 +523,7 @@ window.__ModuleLoader__.load({
 					value: name,
 					onChange: (event) => setName(event.target.value),
 					onKeyDown: (event) => {
+						if (composing(event)) return;
 						if (event.key === 'Enter' && name.trim() !== '') onCreate({ name: name.trim(), role });
 						if (event.key === 'Escape') onCancel();
 					}
@@ -548,6 +557,7 @@ window.__ModuleLoader__.load({
 								if (next !== '' && next !== project.name) commit({ name: next });
 							},
 							onKeyDown: (event) => {
+								if (composing(event)) return;
 								if (event.key === 'Enter') event.target.blur();
 							}
 						})),
