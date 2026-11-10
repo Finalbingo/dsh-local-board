@@ -32,13 +32,14 @@ const STATUSES = ['todo', 'doing', 'done'];
 async function vaultDirOf(config) {
 	const fromEnv = process.env.DSH_KANBAN_VAULT;
 	if (typeof fromEnv === 'string' && fromEnv.trim() !== '') return fromEnv.trim();
-	if (config && typeof config.vaultDir === 'string' && config.vaultDir.trim() !== '') return config.vaultDir.trim();
+	// A folder the user picked in the panel beats the profile default, so the UI can move it.
 	try {
 		const settings = JSON.parse(await fs.readFile(SETTINGS_PATH, 'utf8'));
 		if (typeof settings.vaultDir === 'string' && settings.vaultDir.trim() !== '') return settings.vaultDir.trim();
 	} catch {
-		// No settings file yet: the user has not picked a folder.
+		// No settings file yet.
 	}
+	if (config && typeof config.vaultDir === 'string' && config.vaultDir.trim() !== '') return config.vaultDir.trim();
 	return null;
 }
 
@@ -287,7 +288,8 @@ export function apply(ctx, config) {
 			return mutate(async (board) => {
 				const project = findProject(board.projects, payload.projectId);
 				const item = findItem(project, payload.itemId);
-				assign(item, payload.patch, ['title', 'owner', 'priority', 'due', 'note']);
+				assign(item, payload.patch, ['title', 'owner', 'priority', 'due', 'note', 'doneAt']);
+				if (item.doneAt) item.doneAt = normalizeDue(item.doneAt).slice(0, 10);
 				if (payload.patch && Object.prototype.hasOwnProperty.call(payload.patch, 'color')) {
 					item.color = CARD_COLORS.includes(payload.patch.color) ? payload.patch.color : '';
 				}

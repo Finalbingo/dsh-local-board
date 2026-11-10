@@ -59,7 +59,9 @@ window.__ModuleLoader__.load({
 .kb-proj-del { flex: 0 0 auto; margin-right: 4px; width: 20px; height: 20px; line-height: 1; padding: 0; border: 0; border-radius: 5px; background: transparent; color: var(--dsw-alias-label-secondary); cursor: pointer; opacity: 0; font-size: 14px; }
 .kb-proj:hover .kb-proj-del { opacity: 1; }
 .kb-proj-del:hover { color: var(--dsw-alias-state-error-primary); background: var(--dsw-alias-bg-base); }
-.kb-version { font-size: 11px; color: var(--dsw-alias-label-secondary); opacity: .6; padding: 10px 9px 4px; margin-top: auto; }
+.kb-rail-action { margin-top: auto; text-align: left; font: inherit; font-size: 11.5px; padding: 6px 9px; border: 0; background: transparent; color: var(--dsw-alias-label-secondary); cursor: pointer; border-radius: 6px; }
+.kb-rail-action:hover { color: var(--dsw-alias-label-primary); background: var(--dsw-alias-bg-layer-2); }
+.kb-version { font-size: 11px; color: var(--dsw-alias-label-secondary); opacity: .6; padding: 4px 9px 2px; }
 .kb-proj-head { display: flex; align-items: center; gap: 6px; min-width: 0; }
 .kb-status-dot { width: 6px; height: 6px; border-radius: 50%; flex: 0 0 auto; }
 .kb-status-dot.active { background: var(--dsw-alias-state-success-primary); }
@@ -196,6 +198,7 @@ window.__ModuleLoader__.load({
 				due: item.due,
 				note: item.note || '',
 				color: item.color || '',
+				doneAt: item.doneAt || '',
 				hidden: Boolean(item.hidden)
 			});
 			const field = (key, placeholder) => h('input', {
@@ -238,6 +241,15 @@ window.__ModuleLoader__.load({
 					value: draft.note,
 					onChange: (event) => setDraft({ ...draft, note: event.target.value })
 				}),
+				item.status === 'done' ? h('div', { className: 'kb-row' },
+					h('label', { className: 'kb-field' }, '完成日期',
+						h('input', {
+							className: 'kb-input',
+							type: 'date',
+							value: draft.doneAt || '',
+							onChange: (event) => setDraft({ ...draft, doneAt: event.target.value })
+						}))
+				) : null,
 				h('div', { className: 'kb-swatches' },
 					h('button', {
 						className: `kb-swatch none${draft.color === '' ? ' active' : ''}`,
@@ -761,6 +773,20 @@ window.__ModuleLoader__.load({
 								}, '×')
 							);
 						}),
+						h('button', {
+							className: 'kb-rail-action',
+							title: data.vaultDir ? `当前：${data.vaultDir}` : '选择数据目录',
+							onClick: async () => {
+								if (typeof pickDirectory !== 'function') return;
+								try {
+									const chosen = await pickDirectory();
+									if (!chosen) return;
+									await call('configureVault', { path: chosen });
+								} catch (failure) {
+									window.alert(failure instanceof Error ? failure.message : String(failure));
+								}
+							}
+						}, '更换数据目录'),
 						h('span', { className: 'kb-version' }, data.version ? `看板 v${data.version}` : '')
 					),
 					h('div', { className: 'kb-main' },
