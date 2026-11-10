@@ -24,10 +24,11 @@ SNAPSHOT = pathlib.Path(os.environ.get('KANBAN_SNAPSHOT') or pathlib.Path.home()
 
 
 def read_board():
-    """Read the vault file; LaunchAgents have no Documents access, so fall back to the snapshot."""
+    """Read the vault file; LaunchAgents cannot read ~/Documents and the file may be gone,
+    so fall back to the snapshot the plugin keeps in a readable location."""
     try:
         return BOARD.read_text(encoding='utf-8')
-    except (PermissionError, OSError):
+    except OSError:
         return SNAPSHOT.read_text(encoding='utf-8')
 
 def parse(board_text):
@@ -88,11 +89,12 @@ def notify(body):
     subprocess.run(['/usr/bin/osascript', '-e', script], check=False)
 
 def main():
-    if not BOARD.exists():
-        print('board not found:', BOARD, file=sys.stderr)
-        return 1
     today = datetime.date.today().isoformat()
-    rows = parse(read_board())
+    try:
+        rows = parse(read_board())
+    except OSError as error:
+        print('cannot read board or snapshot:', error, file=sys.stderr)
+        return 1
     body = build(rows, today)
     force = '--force' in sys.argv
     if not body and not force:

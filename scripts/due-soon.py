@@ -26,10 +26,11 @@ SNAPSHOT = pathlib.Path(os.environ.get('KANBAN_SNAPSHOT') or pathlib.Path.home()
 
 
 def read_board():
-    """Read the vault file; LaunchAgents have no Documents access, so fall back to the snapshot."""
+    """Read the vault file; LaunchAgents cannot read ~/Documents and the file may be gone,
+    so fall back to the snapshot the plugin keeps in a readable location."""
     try:
         return BOARD.read_text(encoding='utf-8')
-    except (PermissionError, OSError):
+    except OSError:
         return SNAPSHOT.read_text(encoding='utf-8')
 
 def parse(text):
@@ -77,7 +78,11 @@ def main():
         window = int(sys.argv[sys.argv.index('--window') + 1])
     now = datetime.datetime.now()
     horizon = now + datetime.timedelta(minutes=window)
-    rows = parse(read_board())
+    try:
+        rows = parse(read_board())
+    except OSError as error:
+        print('cannot read board or snapshot:', error, file=sys.stderr)
+        return 1
     state = {k: v for k, v in load_state().items() if v and v > (now - datetime.timedelta(days=2)).isoformat(timespec='minutes')}
     hits = []
     for row in rows:

@@ -24,7 +24,8 @@ const KNOWN = {
 };
 
 export function agentsDir() {
-	return path.join(os.homedir(), 'Library', 'LaunchAgents');
+	// Tests and secondary instances point this elsewhere so they never touch the real jobs.
+	return process.env.DSH_KANBAN_AGENTS_DIR || path.join(os.homedir(), 'Library', 'LaunchAgents');
 }
 
 const DEFAULT_JOBS = {

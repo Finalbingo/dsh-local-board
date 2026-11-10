@@ -234,7 +234,7 @@ window.__ModuleLoader__.load({
 				),
 				h('textarea', {
 					className: 'kb-textarea',
-					placeholder: '备注（进度说明、待确认的事…）',
+					placeholder: '备注（换行会自动合并成「；」，保证一条记录一行）',
 					value: draft.note,
 					onChange: (event) => setDraft({ ...draft, note: event.target.value })
 				}),

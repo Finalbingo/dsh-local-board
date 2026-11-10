@@ -36,6 +36,16 @@ export function today() {
 	return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
 }
 
+/** Deterministic id for an item that lost its block id, so repeated reads agree. */
+export function stableItemId(project, title, status) {
+	const seed = `${project}\u0000${title}\u0000${status}`;
+	let hash = 5381;
+	for (let index = 0; index < seed.length; index += 1) {
+		hash = ((hash * 33) ^ seed.charCodeAt(index)) >>> 0;
+	}
+	return `k-${hash.toString(36).padStart(6, '0').slice(-6)}`;
+}
+
 export function newItemId() {
 	const stamp = Date.now().toString(36).slice(-5);
 	const salt = Math.random().toString(36).slice(2, 5);
@@ -52,6 +62,16 @@ export function projectIdOf(name, taken) {
 }
 
 const ESCAPED_SEP = /\\·/g;
+
+/** An item must stay on one line: collapse any newline the editor let through. */
+export function normalizeNote(text) {
+	return String(text === undefined || text === null ? '' : text)
+		.replace(/\r\n?/g, '\n')
+		.split('\n')
+		.map((line) => line.trim())
+		.filter((line) => line !== '')
+		.join('；');
+}
 
 /** Normalize `2026-11-12 9:30` to `2026-11-12 09:30`; unknown shapes are left alone. */
 export function normalizeDue(value) {
@@ -125,7 +145,7 @@ function renderItem(item) {
 	if (item.priority) parts.push(`#${item.priority}`);
 	if (item.due) parts.push(`📅${item.due}`);
 	if (item.status === 'done' && item.doneAt) parts.push(`✅${item.doneAt}`);
-	if (item.note) parts.push(`📝${escapeSep(item.note)}`);
+	if (item.note) parts.push(`📝${escapeSep(normalizeNote(item.note))}`);
 	const mark = item.status === 'done' ? 'x' : ' ';
 	return `- [${mark}] ${parts.join(TOKEN_SEP)} ^${item.id || newItemId()}`;
 }
@@ -192,11 +212,23 @@ export function parseBoard(text) {
 		parsed.projectId = project.name;
 		project.items.push(parsed);
 	}
+	const usedIds = new Set();
+	for (const candidate of projects) for (const item of candidate.items) if (item.id) usedIds.add(item.id);
 	for (const candidate of projects) {
 		candidate.id = candidate.name;
 		for (const item of candidate.items) {
 			item.projectId = candidate.id;
-			if (!item.id) item.id = newItemId();
+			if (item.id) continue;
+			// No block id in the file: derive one from the content so the next read matches this one.
+			const base = stableItemId(candidate.name, item.title, item.status);
+			let id = base;
+			let suffix = 2;
+			while (usedIds.has(id)) {
+				id = `${base}-${suffix}`;
+				suffix += 1;
+			}
+			item.id = id;
+			usedIds.add(id);
 		}
 	}
 	return { projects, intro, archive: archive.join('\n').replace(/^\s+|\s+$/g, '') };

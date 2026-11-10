@@ -1,4 +1,4 @@
-import { ensureLayout, loadBoard, saveBoard, renderArchiveBlock, newItemId, projectIdOf, normalizeDue, CARD_COLORS, today, pathsOf } from './store.js';
+import { ensureLayout, loadBoard, saveBoard, renderArchiveBlock, newItemId, projectIdOf, normalizeDue, normalizeNote, CARD_COLORS, today, pathsOf } from './store.js';
 import { listAutomations, updateAutomation, syncScripts, ensureDefaultAutomations, SUPPORTED } from './automations.js';
 import fs from 'node:fs/promises';
 import os from 'node:os';
@@ -20,7 +20,7 @@ const SETTINGS_PATH = process.env.DSH_KANBAN_SETTINGS || path.join(os.homedir(),
  * LaunchAgents fire outside this app's TCC grant, so a job cannot read a vault under
  * ~/Documents. Every save also drops a copy here, where those jobs can always read it.
  */
-const SNAPSHOT_PATH = path.join(os.homedir(), '.dsh', 'kanban', 'board-snapshot.md');
+const SNAPSHOT_PATH = process.env.DSH_KANBAN_SNAPSHOT || path.join(os.homedir(), '.dsh', 'kanban', 'board-snapshot.md');
 /** This package's own directory: the shipped helper scripts live under it. */
 const PLUGIN_DIR = import.meta.dirname ?? path.dirname(fileURLToPath(import.meta.url));
 const STATUSES = ['todo', 'doing', 'done'];
@@ -274,7 +274,7 @@ export function apply(ctx, config) {
 					owner: payload.owner || '',
 					priority: payload.priority || '',
 					due: normalizeDue(payload.due),
-					note: payload.note || '',
+					note: normalizeNote(payload.note),
 					color: CARD_COLORS.includes(payload.color) ? payload.color : '',
 					hidden: Boolean(payload.hidden),
 					doneAt: payload.status === 'done' ? today() : '',

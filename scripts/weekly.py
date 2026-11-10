@@ -21,10 +21,11 @@ SNAPSHOT = pathlib.Path(os.environ.get('KANBAN_SNAPSHOT') or pathlib.Path.home()
 
 
 def read_board():
-    """Read the vault file; LaunchAgents have no Documents access, so fall back to the snapshot."""
+    """Read the vault file; LaunchAgents cannot read ~/Documents and the file may be gone,
+    so fall back to the snapshot the plugin keeps in a readable location."""
     try:
         return BOARD.read_text(encoding='utf-8')
-    except (PermissionError, OSError):
+    except OSError:
         return SNAPSHOT.read_text(encoding='utf-8')
 
 def parse(text):
