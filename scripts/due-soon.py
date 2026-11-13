@@ -72,6 +72,29 @@ def save_state(state):
     STATE.parent.mkdir(parents=True, exist_ok=True)
     STATE.write_text(json.dumps(state, ensure_ascii=False), encoding='utf-8')
 
+APPLESCRIPT = (
+    'on run argv\n'
+    '  display notification (item 2 of argv) with title (item 1 of argv) subtitle "DSH 看板" sound name "Glass"\n'
+    'end run'
+)
+
+
+def notify(title, body):
+    """Notification text is user data: pass it as argv so AppleScript never parses it."""
+    try:
+        result = subprocess.run(
+            ['/usr/bin/osascript', '-e', APPLESCRIPT, str(title), str(body)],
+            capture_output=True, text=True, timeout=20
+        )
+        if result.returncode != 0:
+            print('notify failed:', (result.stderr or '').strip() or 'osascript exit ' + str(result.returncode), file=sys.stderr)
+            return False
+        return True
+    except (OSError, subprocess.SubprocessError) as error:
+        print('notify failed:', error, file=sys.stderr)
+        return False
+
+
 def main():
     window = 120
     if '--window' in sys.argv:
@@ -111,7 +134,7 @@ def main():
     if '--dry-run' in sys.argv:
         print('body:', body)
         return 0
-    subprocess.run(['/usr/bin/osascript', '-e', f'display notification "{body}" with title "{TITLE}" sound name "Glass"'], check=False)
+    notify(TITLE, body)
     for when, _minutes, _row, key in hits:
         state[key] = when.isoformat(timespec='minutes')
     save_state(state)

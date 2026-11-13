@@ -70,17 +70,40 @@ def build(rows, today):
         body = body[:197] + '…'
     return body
 
+APPLESCRIPT = (
+    'on run argv\n'
+    '  display notification (item 2 of argv) with title (item 1 of argv) subtitle "DSH 看板" sound name "Glass"\n'
+    'end run'
+)
+
+
+def notify(title, body):
+    """Notification text is user data: pass it as argv so AppleScript never parses it."""
+    try:
+        result = subprocess.run(
+            ['/usr/bin/osascript', '-e', APPLESCRIPT, str(title), str(body)],
+            capture_output=True, text=True, timeout=20
+        )
+        if result.returncode != 0:
+            print('notify failed:', (result.stderr or '').strip() or 'osascript exit ' + str(result.returncode), file=sys.stderr)
+            return False
+        return True
+    except (OSError, subprocess.SubprocessError) as error:
+        print('notify failed:', error, file=sys.stderr)
+        return False
+
+
 def main():
-    if not BOARD.exists():
-        print('board not found', file=sys.stderr)
-        return 1
     today = datetime.date.today()
-    body = build(parse(read_board()), today)
+    try:
+        body = build(parse(read_board()), today)
+    except OSError as error:
+        print('cannot read board or snapshot:', error, file=sys.stderr)
+        return 1
     if '--dry-run' in sys.argv:
         print('body:', body)
         return 0
-    script = 'display notification "' + body.replace('"', '\\"') + '" with title "' + TITLE + '" sound name "Glass"'
-    subprocess.run(['/usr/bin/osascript', '-e', script], check=False)
+    notify(TITLE, body)
     print('notified:', body)
     return 0
 
